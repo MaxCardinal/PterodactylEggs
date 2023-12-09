@@ -1,0 +1,52 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2023-12-09T01:59:49+00:00",
+    "name": "Screeps",
+    "author": "contact@games-tools.com",
+    "description": "A screeps server vanilla (without mods).",
+    "features": null,
+    "docker_images": {
+        "Nodejs 12": "ghcr.io\/parkervcp\/yolks:nodejs_12"
+    },
+    "file_denylist": [],
+    "startup": ".\/launchServer.sh",
+    "config": {
+        "files": "{\r\n    \".screepsrc\": {\r\n        \"parser\": \"properties\",\r\n        \"find\": {\r\n            \"host\": \"0.0.0.0\",\r\n            \"port\": \"{{server.build.default.port}}\",\r\n            \"steam_api_key\": \"{{server.build.env.STEAM_API_KEY}}\"\r\n        }\r\n    }\r\n}",
+        "startup": "{}",
+        "logs": "{}",
+        "stop": "^^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/bash\r\n# NodeJS App Installation Script\r\n#\r\n# Server packages update\r\necho -e \"setting npm permission for user\"\r\nchown -R 988:0 \"\/root\/.npm\"\r\n\r\napt update\r\napt install -y git curl jq file unzip make gcc-9 g++-9 python2.7 libtool build-essential screen\r\n\r\n## Server directory creation\r\nif [ ! -e \/mnt\/server ]; then\r\n    echo -e \"Server directory creation...\"\r\n    mkdir -p \/mnt\/server\r\nfi\r\ncd \/mnt\/server\r\n\r\nif [ -e package.lock.json ]; then\r\n    rm -f package.lock.json\r\nfi\r\nif [ -e node_modules ]; then\r\n    rm -rf node_modules\r\nfi\r\n\r\necho -e \"updating npm. please wait...\"\r\nnpm install npm@6.14.16 -g\r\n\r\n## NPM settings\r\necho -e \"setting up npm...\"\r\nnpm config set python \/usr\/bin\/python2.7\r\nalias python=\/usr\/bin\/python2.7\r\nupdate-alternatives --install \/usr\/bin\/gcc gcc \/usr\/bin\/gcc-9 60 --slave \/usr\/bin\/g++ g++ \/usr\/bin\/g++-9\r\n\r\n## Server installation\/update\r\n\r\necho -e \"installing screeps server...\"\r\nnpm install screeps\r\n\r\n## Screeps files initialization\r\nif [ -e .screepsrc ]; then\r\n    echo \"No server initialization needed because screeps files already exists\"\r\nelse\r\n    echo \"Initializing server files...\"\r\n    echo -e ${STEAM_API_KEY} | npx screeps init\r\nfi\r\n\r\n## Create launch script\r\nif [ ! -e launchServer.sh ]; then\r\n    cat > launchServer.sh <<EOF\r\nif [ \"\\${AUTO_START}\" = \"1\" ]; then\r\n    echo \"Automatic start\"\r\n    npx screeps start & sleep 2 ; npx screeps cli\r\nelse\r\n    echo \"Manual start\"\r\n    \/bin\/sh\r\nfi\r\n\r\nEOF\r\nchmod u+x launchServer.sh\r\nfi\r\n\r\necho -e \"install complete\"\r\nexit 0",
+            "container": "node:12-bullseye-slim",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Steam API Key",
+            "description": "Your steam API key. You can find it here https:\/\/steamcommunity.com\/dev\/apikey",
+            "env_variable": "STEAM_API_KEY",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:40",
+            "field_type": "text"
+        },
+        {
+            "name": "Automatic server start",
+            "description": "If checked the server will start automatically followed by the CLI. Otherwise a bash session will be launched letting you start execute commands to install mods for exemple (\"npx screeps start\" to start the server).",
+            "env_variable": "AUTO_START",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        }
+    ]
+}
